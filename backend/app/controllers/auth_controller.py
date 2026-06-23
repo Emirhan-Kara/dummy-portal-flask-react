@@ -1,7 +1,7 @@
 """Kimlik doğrulama API endpoint'leri."""
 
 from flask import Blueprint, request
-from flask_jwt_extended import jwt_required, get_jwt_identity, set_access_cookies, unset_jwt_cookies
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from app.helpers.decorators import validate_body
 from app.helpers.response_helpers import success_response, error_response
@@ -23,7 +23,7 @@ class AuthController:
         """
         POST /api/auth/login
         Kullanıcı adı ve şifre ile giriş yap.
-        Başarılıysa JWT token'ı httpOnly cookie olarak ayarlar.
+        Başarılıysa JWT token'ı JSON body içinde döndür
         """
         data = request.get_json()
         token, user, error = self.auth_service.login(
@@ -34,23 +34,19 @@ class AuthController:
         if error:
             return error_response(error, 401)
 
-        # JWT cookie olarak ayarla ve kullanıcı bilgisini döndür
-        response = success_response(
-            data=user.to_dict(),
+        # Token'ı JSON body içinde döndür. cookie yönetimi frontendde
+        return success_response(
+            data={'user': user.to_dict(), 'token': token},
             message="Giriş başarılı."
         )
-        set_access_cookies(response[0], token)
-        return response
 
     @jwt_required()
     def logout(self):
         """
         POST /api/auth/logout
-        JWT cookie'yi temizleyerek çıkış yap.
+        Çıkış yap. Token invalidation client tarafında yapılır.
         """
-        response = success_response(message="Çıkış başarılı.")
-        unset_jwt_cookies(response[0])
-        return response
+        return success_response(message="Çıkış başarılı.")
 
     @jwt_required()
     def me(self):

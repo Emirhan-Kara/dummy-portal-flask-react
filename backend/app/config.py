@@ -14,8 +14,5 @@ class Config:
 
     # JWT kimlik doğrulama ayarları
     JWT_SECRET_KEY = 'cart-curt-bla-bla'
-    JWT_TOKEN_LOCATION = ['cookies']
-    JWT_COOKIE_SECURE = False
+    JWT_TOKEN_LOCATION = ['headers']
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
-    JWT_COOKIE_CSRF_PROTECT = False
-    JWT_COOKIE_SAMESITE = 'Lax'

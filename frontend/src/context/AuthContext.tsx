@@ -1,7 +1,7 @@
 /**
  * Kimlik doğrulama Context'i.
  * Uygulama genelinde kullanıcı oturumu, giriş ve çıkış işlemlerini yönetir.
- * JWT token httpOnly cookie'de saklanır — frontend doğrudan erişemez.
+ * JWT token frontend tarafından cookie'de saklanır.
  */
 
 import {
@@ -10,8 +10,10 @@ import {
   useEffect,
   useCallback,
 } from 'react';
+import Cookies from 'js-cookie';
 import type { User, LoginFormValues, AuthContextType, AuthProviderProps } from '../types/auth';
 import * as authService from '../services/authService';
+import { TOKEN_COOKIE_NAME } from '../services/api';
 
 export const AuthContext = createContext<AuthContextType>({
   user: null,
@@ -27,13 +29,21 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Sayfa yüklendiğinde mevcut oturumu kontrol et
   useEffect(() => {
     const checkAuth = async () => {
+      // Cookie yoksa API'ye istek atmaya gerek yok
+      const token = Cookies.get(TOKEN_COOKIE_NAME);
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
       try {
         const response = await authService.getMe();
         if (response.data) {
           setUser(response.data);
         }
       } catch {
-        // 401 dönerse kullanıcı giriş yapmamış — normal durum
+        // 401 dönerse token geçersiz. cookie'yi temizle
+        Cookies.remove(TOKEN_COOKIE_NAME, { path: '/' });
         setUser(null);
       } finally {
         setLoading(false);
@@ -55,7 +65,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       await authService.logout();
     } catch {
-      // API hatası olsa bile session'ı temizle
+      // API hatası olsa bile cookie'yi temizle
+      Cookies.remove(TOKEN_COOKIE_NAME, { path: '/' });
     } finally {
       setUser(null);
     }

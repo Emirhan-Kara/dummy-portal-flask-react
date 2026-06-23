@@ -123,9 +123,6 @@ const LoginPage = () => {
             <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary' }}>
               Ders Seçim Portalı
             </Typography>
-            <Typography variant="body2" sx={{ mt: 0.5, color: 'text.secondary' }}>
-              Öğrenci veya öğretmen olarak giriş yapın
-            </Typography>
           </Box>
 
           {error && (

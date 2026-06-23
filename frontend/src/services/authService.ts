@@ -2,18 +2,35 @@
  * Kimlik doğrulama API çağrıları.
  */
 
-import api from './api';
+import api, { TOKEN_COOKIE_NAME } from './api';
+import Cookies from 'js-cookie';
 import type { User, LoginFormValues, ApiResponse } from '../types/auth';
 
-/** Giriş yap — JWT cookie olarak ayarlanır */
+/** Login yanıtında hem user hem token döner */
+interface LoginResponseData {
+  user: User;
+  token: string;
+}
+
+/** Giriş yap — Token'ı cookie'ye yaz, user bilgisini döndür */
 export const login = async (values: LoginFormValues): Promise<ApiResponse<User>> => {
-  const response = await api.post<ApiResponse<User>>('/auth/login', values);
-  return response.data;
+  const response = await api.post<ApiResponse<LoginResponseData>>('/auth/login', values);
+  const { token, user } = response.data.data!;
+
+  // Token'ı cookie'ye yaz
+  Cookies.set(TOKEN_COOKIE_NAME, token, {
+    expires: 1 / 24, // 1 saat
+    path: '/',
+    sameSite: 'Lax',
+  });
+
+  return { message: response.data.message, data: user };
 };
 
-/** Çıkış yap — JWT cookie temizlenir */
+/** Çıkış yap — Cookie'yi temizle */
 export const logout = async (): Promise<ApiResponse> => {
   const response = await api.post<ApiResponse>('/auth/logout');
+  Cookies.remove(TOKEN_COOKIE_NAME, { path: '/' });
   return response.data;
 };
 

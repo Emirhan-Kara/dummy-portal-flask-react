@@ -21,9 +21,15 @@ import {
   Divider,
   Paper,
   Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import LockIcon from '@mui/icons-material/Lock';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import Layout from '../../components/Layout';
 import CourseCard from '../../components/CourseCard';
@@ -51,6 +57,7 @@ const CourseSelectionPage = () => {
   } = useSelections();
 
   const [guideTeacherId, setGuideTeacherId] = useState<number | null>(user?.guide_teacher_id ?? null);
+  const [confirmOpenStatus, setConfirmOpenStatus] = useState(false);
 
   // Seçilmiş ders ID'leri — havuzda zaten seçilmiş dersleri filtrelemek için
   const selectedCourseIds = new Set(selections.map((s) => s.course_id));
@@ -129,7 +136,7 @@ const CourseSelectionPage = () => {
         {/* Sol Panel — Ders Havuzu */}
         <Grid size={{ xs: 12, md: 4 }}>
           <Typography variant="h6" sx={{ mb: 2 }}>
-            📚 Ders Havuzu
+            Ders Havuzu
           </Typography>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {poolCourses.length === 0 ? (
@@ -158,7 +165,7 @@ const CourseSelectionPage = () => {
         {/* Orta Panel — Sepet */}
         <Grid size={{ xs: 12, md: 4 }}>
           <Typography variant="h6" sx={{ mb: 2 }}>
-            🛒 Sepetim
+            Sepetim
           </Typography>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {cartSelections.length === 0 ? (
@@ -185,7 +192,7 @@ const CourseSelectionPage = () => {
                 fullWidth
                 size="large"
                 startIcon={submitting ? <CircularProgress size={20} color="inherit" /> : <SendIcon />}
-                onClick={submitSelections}
+                onClick={() => setConfirmOpenStatus(true)}
                 disabled={isCartLocked || !hasSubmittable || !guideTeacherId || submitting}
                 sx={{ py: 1.5 }}
               >
@@ -199,7 +206,7 @@ const CourseSelectionPage = () => {
         <Grid size={{ xs: 12, md: 4 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <Typography variant="h6">
-              ✅ Kayıtlı Derslerim
+              Kayıtlı Derslerim
             </Typography>
             {approvedSelections.length > 0 && (
               <Chip
@@ -241,13 +248,44 @@ const CourseSelectionPage = () => {
               <Typography variant="body2" color="text.secondary">
                 Toplam Kayıtlı Kredi
               </Typography>
-              <Typography variant="h6" color="success.main" fontWeight={700}>
+              <Typography variant="h6" color="success.main" sx={{ fontWeight: 700 }}>
                 {approvedSelections.reduce((sum, s) => sum + s.course.credits, 0)} Kredi
               </Typography>
             </Paper>
           )}
         </Grid>
       </Grid>
+
+      {/* Onaya Gönder Onay Dialogu */}
+      <Dialog
+        open={confirmOpenStatus} /* Açılma senaryosu -> confirm ekranının açılma durumu true ise */
+        onClose={() => setConfirmOpenStatus(false)} /* Ekran boşa dokunup kapatıldığında iptal'e basılmış gibi davran */
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <WarningAmberIcon color="warning" />
+          Emin misiniz?
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Dersleriniz onayda beklediği sürece sepetinizde işlem yapamazsınız.
+            Devam etmek istiyor musunuz?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmOpenStatus(false)} /* İptale basılınca confirm ekranının açılma durumunu false yap (kapancak çünkü open ona bağlı) */>
+            İptal
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              setConfirmOpenStatus(false); /* Onaya basıldığında da confirm ekranı kapanacak, aksiyon alınacak */
+              submitSelections(); /* Onaya basıldıysa selectionları submitle */
+            }}
+          >
+            Evet, Onaya Gönder
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Snackbar — işlem bildirimleri */}
       <Snackbar
